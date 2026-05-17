@@ -1,0 +1,19 @@
+# Maven target folder
+target/
+dependency-reduced-pom.xml
+
+# IDE - VSCode
+.vscode/
+
+# IDE - IntelliJ IDEA
+.idea/
+*.iml
+
+# IDE - Eclipse
+.project
+.classpath
+.settings/
+
+# OS generated files
+.DS_Store
+Thumbs.db

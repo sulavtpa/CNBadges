@@ -1,0 +1,14 @@
+name: CN-Badges
+version: '1.0'
+main: net.cn.badges.CNBadges
+api-version: '1.21'
+softdepend: [PlaceholderAPI]
+commands:
+  badge:
+    description: Manage CN Badges
+    aliases: [badges]
+    permission: cn.badges.admin
+permissions:
+  cn.badges.admin:
+    description: Allows full access to the badge command
+    default: op

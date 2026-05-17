@@ -1,0 +1,15 @@
+[database]
+host = "127.0.0.1"
+port = 3306
+database = "badges_db"
+username = "root"
+password = "password"
+
+# Example Badges
+# [badges.donor]
+# weight = 10
+# tiers = { 1 = "<yellow>★</yellow>", 2 = "<gold>★★</gold>" }
+
+# [badges.staff]
+# weight = 100
+# tiers = { 1 = "<red>[Mod]</red>", 2 = "<dark_red>[Admin]</dark_red>" }
