@@ -7,11 +7,16 @@ import org.bukkit.command.TabExecutor;
 import org.bukkit.entity.Player;
 
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.UUID;
 import java.util.stream.Collectors;
 
 public class MyBadgeCmd implements TabExecutor {
     private final CNBadges plugin;
+    private final Map<UUID, Long> cooldowns = new HashMap<>();
+    private static final long COOLDOWN_TIME = 5000L;
     private static final List<String> SYMBOLS = Arrays.asList("✧", "✦", "★");
     private static final List<String> COLORS = Arrays.asList(
             "black", "dark_gray", "dark_blue", "blue", "dark_green", "green",
@@ -31,7 +36,8 @@ public class MyBadgeCmd implements TabExecutor {
         }
 
         Player player = (Player) sender;
-        SpecialBadgeData data = plugin.getBadgeCache().getSpecialBadge(player.getUniqueId());
+        UUID uuid = player.getUniqueId();
+        SpecialBadgeData data = plugin.getBadgeCache().getSpecialBadge(uuid);
 
         if (data == null || !data.hasPermission()) {
             player.sendMessage(MiniMessage.miniMessage().deserialize("<red>You do not have permission to use the special badge."));
@@ -41,6 +47,15 @@ public class MyBadgeCmd implements TabExecutor {
         if (args.length < 2) {
             player.sendMessage(MiniMessage.miniMessage().deserialize("<red>Usage: /mybadge <badge> <color>"));
             return true;
+        }
+
+        long currentTime = System.currentTimeMillis();
+        if (cooldowns.containsKey(uuid)) {
+            long timeLeft = (cooldowns.get(uuid) + COOLDOWN_TIME) - currentTime;
+            if (timeLeft > 0) {
+                player.sendMessage(MiniMessage.miniMessage().deserialize("<red>Please wait " + (timeLeft / 1000) + " seconds before using this command again."));
+                return true;
+            }
         }
 
         String symbol = args[0];
@@ -56,7 +71,8 @@ public class MyBadgeCmd implements TabExecutor {
             return true;
         }
 
-        plugin.getDbManager().setSpecialBadge(player.getUniqueId(), symbol, color);
+        plugin.getDbManager().setSpecialBadge(uuid, symbol, color);
+        cooldowns.put(uuid, currentTime);
         player.sendMessage(MiniMessage.miniMessage().deserialize("<green>Your special badge has been updated to <" + color + ">" + symbol + "</" + color + ">"));
         return true;
     }
