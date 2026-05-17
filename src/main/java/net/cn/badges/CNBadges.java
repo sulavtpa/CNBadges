@@ -102,7 +102,7 @@ public class CNBadges extends JavaPlugin implements Listener {
             SpecialBadgeData specialData = badgeCache.getSpecialBadge(player.getUniqueId());
 
             boolean hasNormalBadges = pBadges != null && !pBadges.isEmpty();
-            boolean hasSpecialBadge = specialData != null && specialData.hasPermission() && specialData.getSymbol() != null;
+            boolean hasSpecialBadge = specialData != null && specialData.hasPermission();
 
             if (!hasNormalBadges && !hasSpecialBadge)
                 return "";
@@ -110,8 +110,9 @@ public class CNBadges extends JavaPlugin implements Listener {
             StringJoiner result = new StringJoiner(" ");
 
             if (hasSpecialBadge) {
-                String color = specialData.getColor() != null ? specialData.getColor() : "yellow";
-                String specialBadgeRaw = "<" + color + ">" + specialData.getSymbol() + "</" + color + ">";
+                String color = specialData.getColor() != null ? specialData.getColor() : "gold";
+                String symbol = specialData.getSymbol() != null ? specialData.getSymbol() : "★";
+                String specialBadgeRaw = "<" + color + ">" + symbol + "</" + color + ">";
                 String legacySpecial = LegacyComponentSerializer.legacySection()
                         .serialize(MiniMessage.miniMessage().deserialize(specialBadgeRaw));
                 result.add(legacySpecial);
