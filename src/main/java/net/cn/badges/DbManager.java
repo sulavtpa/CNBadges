@@ -77,8 +77,16 @@ public class DbManager {
                                 "badge_id VARCHAR(64) NOT NULL," +
                                 "tier INT DEFAULT 1," +
                                 "UNIQUE KEY unique_user_badge (uuid, badge_id)" +
-                                ");")) {
+                                ");");
+             PreparedStatement psSpecial = conn.prepareStatement(
+                     "CREATE TABLE IF NOT EXISTS cn_special_badges (" +
+                             "uuid VARCHAR(36) PRIMARY KEY," +
+                             "has_permission BOOLEAN DEFAULT FALSE," +
+                             "symbol VARCHAR(16)," +
+                             "color VARCHAR(32)" +
+                             ");")) {
             ps.executeUpdate();
+            psSpecial.executeUpdate();
         }
     }
 
@@ -98,8 +106,8 @@ public class DbManager {
             return;
         Bukkit.getScheduler().runTaskAsynchronously(plugin, () -> {
             try (Connection conn = dataSource.getConnection();
-                    PreparedStatement ps = conn
-                            .prepareStatement("SELECT badge_id, tier FROM cn_badges WHERE uuid = ?")) {
+                    PreparedStatement ps = conn.prepareStatement("SELECT badge_id, tier FROM cn_badges WHERE uuid = ?");
+                 PreparedStatement psSpecial = conn.prepareStatement("SELECT has_permission, symbol, color FROM cn_special_badges WHERE uuid = ?")) {
                 ps.setString(1, uuid.toString());
                 ResultSet rs = ps.executeQuery();
                 Map<String, Integer> badges = new HashMap<>();
@@ -107,6 +115,14 @@ public class DbManager {
                     badges.put(rs.getString("badge_id"), rs.getInt("tier"));
                 }
                 plugin.getBadgeCache().loadplayer(uuid, badges);
+
+                psSpecial.setString(1, uuid.toString());
+                ResultSet rsSpecial = psSpecial.executeQuery();
+                if (rsSpecial.next()) {
+                    plugin.getBadgeCache().loadSpecialBadge(uuid, new SpecialBadgeData(rsSpecial.getBoolean("has_permission"), rsSpecial.getString("symbol"), rsSpecial.getString("color")));
+                } else {
+                    plugin.getBadgeCache().loadSpecialBadge(uuid, new SpecialBadgeData(false, null, null));
+                }
             } catch (SQLException e) {
                 plugin.getLogger().warning("Failed to load badges for " + uuid + ": " + e.getMessage());
             }
@@ -161,6 +177,47 @@ public class DbManager {
                 Bukkit.getOnlinePlayers().forEach(p -> plugin.getBadgeCache().remBadge(p.getUniqueId(), badge));
             } catch (SQLException e) {
                 plugin.getLogger().warning("Failed to remove badge " + badge + " from all users: " + e.getMessage());
+            }
+        });
+    }
+
+    public void giveSpecialPermission(UUID uuid) {
+        if (dataSource == null) return;
+        Bukkit.getScheduler().runTaskAsynchronously(plugin, () -> {
+            try (Connection conn = dataSource.getConnection();
+                 PreparedStatement ps = conn.prepareStatement(
+                         "INSERT INTO cn_special_badges (uuid, has_permission) VALUES (?, true) ON DUPLICATE KEY UPDATE has_permission = true")) {
+                ps.setString(1, uuid.toString());
+                ps.executeUpdate();
+                SpecialBadgeData data = plugin.getBadgeCache().getSpecialBadge(uuid);
+                if (data != null) {
+                    data.setPermission(true);
+                } else {
+                    plugin.getBadgeCache().loadSpecialBadge(uuid, new SpecialBadgeData(true, null, null));
+                }
+            } catch (SQLException e) {
+                plugin.getLogger().warning("Failed to give special badge permission to " + uuid + ": " + e.getMessage());
+            }
+        });
+    }
+
+    public void setSpecialBadge(UUID uuid, String symbol, String color) {
+        if (dataSource == null) return;
+        Bukkit.getScheduler().runTaskAsynchronously(plugin, () -> {
+            try (Connection conn = dataSource.getConnection();
+                 PreparedStatement ps = conn.prepareStatement(
+                         "UPDATE cn_special_badges SET symbol = ?, color = ? WHERE uuid = ?")) {
+                ps.setString(1, symbol);
+                ps.setString(2, color);
+                ps.setString(3, uuid.toString());
+                ps.executeUpdate();
+                SpecialBadgeData data = plugin.getBadgeCache().getSpecialBadge(uuid);
+                if (data != null) {
+                    data.setSymbol(symbol);
+                    data.setColor(color);
+                }
+            } catch (SQLException e) {
+                plugin.getLogger().warning("Failed to set special badge for " + uuid + ": " + e.getMessage());
             }
         });
     }

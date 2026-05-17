@@ -8,6 +8,8 @@ commands:
     description: Manage CN Badges
     aliases: [badges]
     permission: cn.badges.admin
+  mybadge:
+    description: Manage your special badge
 permissions:
   cn.badges.admin:
     description: Allows full access to the badge command

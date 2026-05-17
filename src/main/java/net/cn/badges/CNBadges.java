@@ -31,6 +31,7 @@ public class CNBadges extends JavaPlugin implements Listener {
 
         getServer().getPluginManager().registerEvents(this, this);
         getCommand("badge").setExecutor(new BCmd(this));
+        getCommand("mybadge").setExecutor(new MyBadgeCmd(this));
 
         if (Bukkit.getPluginManager().getPlugin("PlaceholderAPI") != null) {
             new BadgePlaceholder().register();
@@ -98,32 +99,47 @@ public class CNBadges extends JavaPlugin implements Listener {
                 return "";
 
             Map<String, Integer> pBadges = badgeCache.getBadge(player.getUniqueId());
-            if (pBadges == null || pBadges.isEmpty())
+            SpecialBadgeData specialData = badgeCache.getSpecialBadge(player.getUniqueId());
+
+            boolean hasNormalBadges = pBadges != null && !pBadges.isEmpty();
+            boolean hasSpecialBadge = specialData != null && specialData.hasPermission() && specialData.getSymbol() != null;
+
+            if (!hasNormalBadges && !hasSpecialBadge)
                 return "";
-
-            Map<String, CfgManager.BDef> definitions = configManager.getBadgeDefs();
-            List<Map.Entry<String, Integer>> targets = new ArrayList<>();
-
-            for (Map.Entry<String, Integer> entry : pBadges.entrySet()) {
-                if (definitions.containsKey(entry.getKey())) {
-                    targets.add(entry);
-                }
-            }
-
-            if (targets.isEmpty())
-                return "";
-
-            targets.sort((e1, e2) -> Integer.compare(
-                    definitions.get(e2.getKey()).weight,
-                    definitions.get(e1.getKey()).weight));
 
             StringJoiner result = new StringJoiner(" ");
-            for (Map.Entry<String, Integer> entry : targets) {
-                String rawDisplay = definitions.get(entry.getKey()).tiers.get(entry.getValue());
-                if (rawDisplay != null) {
-                    String legacy = LegacyComponentSerializer.legacySection()
-                            .serialize(MiniMessage.miniMessage().deserialize(rawDisplay));
-                    result.add(legacy);
+
+            if (hasSpecialBadge) {
+                String color = specialData.getColor() != null ? specialData.getColor() : "yellow";
+                String specialBadgeRaw = "<" + color + ">" + specialData.getSymbol() + "</" + color + ">";
+                String legacySpecial = LegacyComponentSerializer.legacySection()
+                        .serialize(MiniMessage.miniMessage().deserialize(specialBadgeRaw));
+                result.add(legacySpecial);
+            }
+
+            if (hasNormalBadges) {
+                Map<String, CfgManager.BDef> definitions = configManager.getBadgeDefs();
+                List<Map.Entry<String, Integer>> targets = new ArrayList<>();
+
+                for (Map.Entry<String, Integer> entry : pBadges.entrySet()) {
+                    if (definitions.containsKey(entry.getKey())) {
+                        targets.add(entry);
+                    }
+                }
+
+                if (!targets.isEmpty()) {
+                    targets.sort((e1, e2) -> Integer.compare(
+                            definitions.get(e2.getKey()).weight,
+                            definitions.get(e1.getKey()).weight));
+
+                    for (Map.Entry<String, Integer> entry : targets) {
+                        String rawDisplay = definitions.get(entry.getKey()).tiers.get(entry.getValue());
+                        if (rawDisplay != null) {
+                            String legacy = LegacyComponentSerializer.legacySection()
+                                    .serialize(MiniMessage.miniMessage().deserialize(rawDisplay));
+                            result.add(legacy);
+                        }
+                    }
                 }
             }
 

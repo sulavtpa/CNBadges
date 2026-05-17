@@ -150,6 +150,16 @@ public class BCmd implements TabExecutor {
                 sender.sendMessage(MiniMessage.miniMessage().deserialize("<green>CN-Badges full reload initiated."));
                 break;
 
+            case "special":
+                if (args.length == 3 && args[1].equalsIgnoreCase("give")) {
+                    OfflinePlayer target = Bukkit.getOfflinePlayer(args[2]);
+                    plugin.getDbManager().giveSpecialPermission(target.getUniqueId());
+                    sender.sendMessage(MiniMessage.miniMessage().deserialize("<green>Gave special badge permission to " + args[2] + "."));
+                } else {
+                    sender.sendMessage(MiniMessage.miniMessage().deserialize("<red>Usage: /badge special give <player>"));
+                }
+                break;
+
             default:
                 sender.sendMessage(MiniMessage.miniMessage().deserialize("<red>Unknown command."));
                 break;
@@ -163,7 +173,7 @@ public class BCmd implements TabExecutor {
             return Collections.emptyList();
 
         List<String> completions = new ArrayList<>();
-        List<String> commands = Arrays.asList("create", "tier", "edit", "remove", "give", "reload");
+        List<String> commands = Arrays.asList("create", "tier", "edit", "remove", "give", "reload", "special");
 
         if (args.length == 1) {
             completions.addAll(commands);
@@ -184,6 +194,9 @@ public class BCmd implements TabExecutor {
                     break;
                 case "reload":
                     completions.add("database");
+                    break;
+                case "special":
+                    completions.add("give");
                     break;
             }
         } else if (args.length == 3) {
@@ -207,6 +220,11 @@ public class BCmd implements TabExecutor {
                     break;
                 case "create":
                     completions.add("<display>");
+                    break;
+                case "special":
+                    if (args[1].equalsIgnoreCase("give")) {
+                        Bukkit.getOnlinePlayers().forEach(p -> completions.add(p.getName()));
+                    }
                     break;
             }
         } else if (args.length == 4) {

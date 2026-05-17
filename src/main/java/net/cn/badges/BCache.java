@@ -8,6 +8,7 @@ import java.util.concurrent.ConcurrentHashMap;
 
 public class BCache {
     private final Map<UUID, Map<String, Integer>> playerBadges = new ConcurrentHashMap<>();
+    private final Map<UUID, SpecialBadgeData> specialBadges = new ConcurrentHashMap<>();
     private final Map<UUID, Integer> taskIds = new ConcurrentHashMap<>();
     private final CNBadges plugin;
 
@@ -23,6 +24,7 @@ public class BCache {
     public void autoremover(UUID uuid) {
         int taskId = Bukkit.getScheduler().runTaskLaterAsynchronously(plugin, () -> {
             playerBadges.remove(uuid);
+            specialBadges.remove(uuid);
             taskIds.remove(uuid);
         }, 200L).getTaskId();
         taskIds.put(uuid, taskId);
@@ -50,8 +52,18 @@ public class BCache {
         return playerBadges.get(uuid);
     }
 
+    public void loadSpecialBadge(UUID uuid, SpecialBadgeData data) {
+        specialBadges.put(uuid, data);
+        cancelRemovalTask(uuid);
+    }
+
+    public SpecialBadgeData getSpecialBadge(UUID uuid) {
+        return specialBadges.get(uuid);
+    }
+
     public void clear() {
         playerBadges.clear();
+        specialBadges.clear();
         for (int taskId : taskIds.values()) {
             Bukkit.getScheduler().cancelTask(taskId);
         }
