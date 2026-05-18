@@ -1,4 +1,4 @@
-# CN-BadgeSystem
+# CN-Badges
 
 CN-Badges was created to fullfill the specific requirement of having a sustainable, easy yet feature rich **badges** that is avaiable and viewable on multiple servers.
 *ofc it needs to share the same database*
