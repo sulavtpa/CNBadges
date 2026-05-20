@@ -131,4 +131,3 @@ CN-Badges is released under the **GNU General Public License v2.0**. See the [LI
 ---
 
 *This plugin is made for CraftNepal minecraft server play.craftnepal.net :) Feel free to join, Everyone is welcome*
-```
