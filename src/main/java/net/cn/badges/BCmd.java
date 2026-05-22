@@ -153,10 +153,22 @@ public class BCmd implements TabExecutor {
             case "special":
                 if (args.length == 3 && args[1].equalsIgnoreCase("give")) {
                     OfflinePlayer target = Bukkit.getOfflinePlayer(args[2]);
+                    if (!target.hasPlayedBefore() && !target.isOnline()) {
+                        sender.sendMessage(MiniMessage.miniMessage().deserialize("<red>Player " + args[2] + " has never joined the server."));
+                        return true;
+                    }
                     plugin.getDbManager().giveSpecialPermission(target.getUniqueId());
                     sender.sendMessage(MiniMessage.miniMessage().deserialize("<green>Gave special badge permission to " + args[2] + "."));
+                } else if (args.length == 3 && args[1].equalsIgnoreCase("remove")) {
+                    OfflinePlayer target = Bukkit.getOfflinePlayer(args[2]);
+                    if (!target.hasPlayedBefore() && !target.isOnline()) {
+                        sender.sendMessage(MiniMessage.miniMessage().deserialize("<red>Player " + args[2] + " has never joined the server."));
+                        return true;
+                    }
+                    plugin.getDbManager().removeSpecialPermission(target.getUniqueId());
+                    sender.sendMessage(MiniMessage.miniMessage().deserialize("<green>Removed special badge permission from " + args[2] + "."));
                 } else {
-                    sender.sendMessage(MiniMessage.miniMessage().deserialize("<red>Usage: /badge special give <player>"));
+                    sender.sendMessage(MiniMessage.miniMessage().deserialize("<red>Usage: /badge special <give|remove> <player>"));
                 }
                 break;
 
@@ -197,6 +209,7 @@ public class BCmd implements TabExecutor {
                     break;
                 case "special":
                     completions.add("give");
+                    completions.add("remove");
                     break;
             }
         } else if (args.length == 3) {
@@ -222,7 +235,7 @@ public class BCmd implements TabExecutor {
                     completions.add("<display>");
                     break;
                 case "special":
-                    if (args[1].equalsIgnoreCase("give")) {
+                    if (args[1].equalsIgnoreCase("give") || args[1].equalsIgnoreCase("remove")) {
                         Bukkit.getOnlinePlayers().forEach(p -> completions.add(p.getName()));
                     }
                     break;

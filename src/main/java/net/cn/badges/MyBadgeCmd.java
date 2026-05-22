@@ -7,6 +7,7 @@ import org.bukkit.command.TabExecutor;
 import org.bukkit.entity.Player;
 
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -44,8 +45,23 @@ public class MyBadgeCmd implements TabExecutor {
             return true;
         }
 
+        if (args.length == 1 && (args[0].equalsIgnoreCase("clear") || args[0].equalsIgnoreCase("reset"))) {
+            long currentTime = System.currentTimeMillis();
+            if (cooldowns.containsKey(uuid)) {
+                long timeLeft = (cooldowns.get(uuid) + COOLDOWN_TIME) - currentTime;
+                if (timeLeft > 0) {
+                    player.sendMessage(MiniMessage.miniMessage().deserialize("<red>Please wait " + (timeLeft / 1000) + " seconds before using this command again."));
+                    return true;
+                }
+            }
+            plugin.getDbManager().setSpecialBadge(uuid, null, null);
+            cooldowns.put(uuid, currentTime);
+            player.sendMessage(MiniMessage.miniMessage().deserialize("<green>Your special badge customization has been cleared."));
+            return true;
+        }
+
         if (args.length < 2) {
-            player.sendMessage(MiniMessage.miniMessage().deserialize("<red>Usage: /mybadge <badge> <color>"));
+            player.sendMessage(MiniMessage.miniMessage().deserialize("<red>Usage: /mybadge <badge> <color> OR /mybadge <clear|reset>"));
             return true;
         }
 
@@ -88,10 +104,16 @@ public class MyBadgeCmd implements TabExecutor {
         }
 
         if (args.length == 1) {
-            return SYMBOLS.stream()
-                    .filter(s -> s.startsWith(args[0]))
+            java.util.List<String> list = new java.util.ArrayList<>(SYMBOLS);
+            list.add("clear");
+            list.add("reset");
+            return list.stream()
+                    .filter(s -> s.toLowerCase().startsWith(args[0].toLowerCase()))
                     .collect(Collectors.toList());
         } else if (args.length == 2) {
+            if (args[0].equalsIgnoreCase("clear") || args[0].equalsIgnoreCase("reset")) {
+                return Collections.emptyList();
+            }
             return COLORS.stream()
                     .filter(c -> c.startsWith(args[1].toLowerCase()))
                     .collect(Collectors.toList());
