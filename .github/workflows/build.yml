@@ -1,0 +1,41 @@
+name: Build and Package
+
+on:
+  push:
+    branches: [ "**" ]
+  pull_request:
+    branches: [ "**" ]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+
+    - name: Set up JDK 25
+      uses: actions/setup-java@v4
+      with:
+        java-version: '25'
+        distribution: 'temurin'
+        cache: 'maven'
+
+    - name: Build with Maven
+      run: mvn clean package --file pom.xml
+
+    - name: Generate Versioned JAR Name and Rename
+      id: rename
+      run: |
+        BUILD_DATE=$(date +'%Y%m%d')
+        RANDOM_HEX=$(openssl rand -hex 2)
+        JAR_NAME="cnbadges-${BUILD_DATE}-${RANDOM_HEX}.jar"
+        echo "Generated JAR Name: ${JAR_NAME}"
+        mv target/CN-BadgeSystem-1.0-SNAPSHOT.jar target/${JAR_NAME}
+        echo "jar_name=${JAR_NAME}" >> $GITHUB_OUTPUT
+
+    - name: Upload Artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: ${{ steps.rename.outputs.jar_name }}
+        path: target/${{ steps.rename.outputs.jar_name }}
