@@ -30,7 +30,7 @@ public class BCmd implements TabExecutor {
 
         if (args.length == 0) {
             sender.sendMessage(
-                    MiniMessage.miniMessage().deserialize("<red>Usage: /badge <create|tier|edit|remove|give|reload [database]>"));
+                    MiniMessage.miniMessage().deserialize("<red>Usage: /badge <create|tier|edit|remove|give|reload [database]|list>"));
             return true;
         }
 
@@ -39,11 +39,6 @@ public class BCmd implements TabExecutor {
                 if (args.length < 3) {
                     sender.sendMessage(
                             MiniMessage.miniMessage().deserialize("<red>Usage: /badge give <player> <badge> [tier]"));
-                    return true;
-                }
-                OfflinePlayer player = Bukkit.getOfflinePlayer(args[1]);
-                if (!player.hasPlayedBefore() && !player.isOnline()) {
-                    sender.sendMessage(MiniMessage.miniMessage().deserialize("<red>Player " + args[1] + " has never joined the server."));
                     return true;
                 }
                 String badge = args[2];
@@ -57,9 +52,17 @@ public class BCmd implements TabExecutor {
                         return true;
                     }
                 }
-                plugin.getDbManager().giveBadge(player.getUniqueId(), badge, tier);
-                sender.sendMessage(MiniMessage.miniMessage()
-                        .deserialize("<green>Gave " + badge + " tier " + tier + " to " + args[1] + "."));
+                final int finalTier = tier;
+                Bukkit.getScheduler().runTaskAsynchronously(plugin, () -> {
+                    OfflinePlayer player = Bukkit.getOfflinePlayer(args[1]);
+                    if (!player.hasPlayedBefore() && !player.isOnline()) {
+                        Bukkit.getScheduler().runTask(plugin, () -> sender.sendMessage(MiniMessage.miniMessage().deserialize("<red>Player " + args[1] + " has never joined the server.")));
+                        return;
+                    }
+                    plugin.getDbManager().giveBadge(player.getUniqueId(), badge, finalTier);
+                    Bukkit.getScheduler().runTask(plugin, () -> sender.sendMessage(MiniMessage.miniMessage()
+                            .deserialize("<green>Gave " + badge + " tier " + finalTier + " to " + args[1] + ".")));
+                });
                 break;
 
             case "remove":
@@ -69,14 +72,16 @@ public class BCmd implements TabExecutor {
                     sender.sendMessage(
                             MiniMessage.miniMessage().deserialize("<green>Removed badge " + args[1] + " entirely."));
                 } else if (args.length == 3) {
-                    OfflinePlayer target = Bukkit.getOfflinePlayer(args[1]);
-                    if (!target.hasPlayedBefore() && !target.isOnline()) {
-                        sender.sendMessage(MiniMessage.miniMessage().deserialize("<red>Player " + args[1] + " has never joined the server."));
-                        return true;
-                    }
-                    plugin.getDbManager().removeBadge(target.getUniqueId(), args[2]);
-                    sender.sendMessage(MiniMessage.miniMessage()
-                            .deserialize("<green>Removed badge " + args[2] + " from " + args[1] + "."));
+                    Bukkit.getScheduler().runTaskAsynchronously(plugin, () -> {
+                        OfflinePlayer target = Bukkit.getOfflinePlayer(args[1]);
+                        if (!target.hasPlayedBefore() && !target.isOnline()) {
+                            Bukkit.getScheduler().runTask(plugin, () -> sender.sendMessage(MiniMessage.miniMessage().deserialize("<red>Player " + args[1] + " has never joined the server.")));
+                            return;
+                        }
+                        plugin.getDbManager().removeBadge(target.getUniqueId(), args[2]);
+                        Bukkit.getScheduler().runTask(plugin, () -> sender.sendMessage(MiniMessage.miniMessage()
+                                .deserialize("<green>Removed badge " + args[2] + " from " + args[1] + ".")));
+                    });
                 } else if (args.length == 4 && args[2].equalsIgnoreCase("tier")) {
                     try {
                         int rTier = Integer.parseInt(args[3]);
@@ -152,24 +157,33 @@ public class BCmd implements TabExecutor {
 
             case "special":
                 if (args.length == 3 && args[1].equalsIgnoreCase("give")) {
-                    OfflinePlayer target = Bukkit.getOfflinePlayer(args[2]);
-                    if (!target.hasPlayedBefore() && !target.isOnline()) {
-                        sender.sendMessage(MiniMessage.miniMessage().deserialize("<red>Player " + args[2] + " has never joined the server."));
-                        return true;
-                    }
-                    plugin.getDbManager().giveSpecialPermission(target.getUniqueId());
-                    sender.sendMessage(MiniMessage.miniMessage().deserialize("<green>Gave special badge permission to " + args[2] + "."));
+                    Bukkit.getScheduler().runTaskAsynchronously(plugin, () -> {
+                        OfflinePlayer target = Bukkit.getOfflinePlayer(args[2]);
+                        if (!target.hasPlayedBefore() && !target.isOnline()) {
+                            Bukkit.getScheduler().runTask(plugin, () -> sender.sendMessage(MiniMessage.miniMessage().deserialize("<red>Player " + args[2] + " has never joined the server.")));
+                            return;
+                        }
+                        plugin.getDbManager().giveSpecialPermission(target.getUniqueId());
+                        Bukkit.getScheduler().runTask(plugin, () -> sender.sendMessage(MiniMessage.miniMessage().deserialize("<green>Gave special badge permission to " + args[2] + ".")));
+                    });
                 } else if (args.length == 3 && args[1].equalsIgnoreCase("remove")) {
-                    OfflinePlayer target = Bukkit.getOfflinePlayer(args[2]);
-                    if (!target.hasPlayedBefore() && !target.isOnline()) {
-                        sender.sendMessage(MiniMessage.miniMessage().deserialize("<red>Player " + args[2] + " has never joined the server."));
-                        return true;
-                    }
-                    plugin.getDbManager().removeSpecialPermission(target.getUniqueId());
-                    sender.sendMessage(MiniMessage.miniMessage().deserialize("<green>Removed special badge permission from " + args[2] + "."));
+                    Bukkit.getScheduler().runTaskAsynchronously(plugin, () -> {
+                        OfflinePlayer target = Bukkit.getOfflinePlayer(args[2]);
+                        if (!target.hasPlayedBefore() && !target.isOnline()) {
+                            Bukkit.getScheduler().runTask(plugin, () -> sender.sendMessage(MiniMessage.miniMessage().deserialize("<red>Player " + args[2] + " has never joined the server.")));
+                            return;
+                        }
+                        plugin.getDbManager().removeSpecialPermission(target.getUniqueId());
+                        Bukkit.getScheduler().runTask(plugin, () -> sender.sendMessage(MiniMessage.miniMessage().deserialize("<green>Removed special badge permission from " + args[2] + ".")));
+                    });
                 } else {
                     sender.sendMessage(MiniMessage.miniMessage().deserialize("<red>Usage: /badge special <give|remove> <player>"));
                 }
+                break;
+
+            case "list":
+                String listMsg = String.join(", ", plugin.getCfgManager().getBadgeDefs().keySet());
+                sender.sendMessage(MiniMessage.miniMessage().deserialize("<green>Available badges: <white>" + listMsg));
                 break;
 
             default:
@@ -185,7 +199,7 @@ public class BCmd implements TabExecutor {
             return Collections.emptyList();
 
         List<String> completions = new ArrayList<>();
-        List<String> commands = Arrays.asList("create", "tier", "edit", "remove", "give", "reload", "special");
+        List<String> commands = Arrays.asList("create", "tier", "edit", "remove", "give", "reload", "special", "list");
 
         if (args.length == 1) {
             completions.addAll(commands);

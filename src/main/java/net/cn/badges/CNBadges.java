@@ -31,7 +31,9 @@ public class CNBadges extends JavaPlugin implements Listener {
 
         getServer().getPluginManager().registerEvents(this, this);
         getCommand("badge").setExecutor(new BCmd(this));
-        getCommand("mybadge").setExecutor(new MyBadgeCmd(this));
+        MyBadgeCmd myBadgeCmd = new MyBadgeCmd(this);
+        getCommand("mybadge").setExecutor(myBadgeCmd);
+        getServer().getPluginManager().registerEvents(myBadgeCmd, this);
 
         if (Bukkit.getPluginManager().getPlugin("PlaceholderAPI") != null) {
             new BadgePlaceholder().register();

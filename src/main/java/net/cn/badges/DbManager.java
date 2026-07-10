@@ -15,7 +15,6 @@ import java.util.UUID;
 public class DbManager {
     private final CNBadges plugin;
     private HikariDataSource dataSource;
-    private int retryCount = 0;
     private org.bukkit.scheduler.BukkitTask connectionTask;
 
     public DbManager(CNBadges plugin) {
@@ -38,35 +37,25 @@ public class DbManager {
             config.setPassword(plugin.getCfgManager().getDbPassword());
             config.setMaximumPoolSize(10);
             config.setConnectionTimeout(5000);
+            config.setInitializationFailTimeout(1);
 
             dataSource = new HikariDataSource(config);
             plugin.getLogger().info("Connecting to database at " + plugin.getCfgManager().getDbHost() + ":"
                     + plugin.getCfgManager().getDbPort() + "...");
             createTable();
             plugin.getLogger().info("Successfully connected to the database.");
-            retryCount = 0;
 
             Bukkit.getOnlinePlayers().forEach(p -> loadplayer(p.getUniqueId()));
 
         } catch (Exception e) {
-            retryCount++;
             plugin.getLogger()
-                    .warning("Failed to connect to database (Attempt " + retryCount + "/3): " + e.getMessage());
-            if (retryCount < 3) {
-                connectionTask = Bukkit.getScheduler().runTaskLaterAsynchronously(plugin, this::attemptConnection,
-                        100L);
-            } else {
-                plugin.getLogger()
-                        .severe("Database connection failed after 3 attempts. Disabling database operations.");
-                e.printStackTrace();
-                dataSource = null;
-            }
+                    .warning("Failed to connect to database: " + e.getMessage());
+            dataSource = null;
         }
     }
 
     public void reload() {
         disconnect();
-        retryCount = 0;
         connect();
     }
 

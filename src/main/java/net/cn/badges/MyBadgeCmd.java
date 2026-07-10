@@ -5,6 +5,9 @@ import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
 import org.bukkit.command.TabExecutor;
 import org.bukkit.entity.Player;
+import org.bukkit.event.EventHandler;
+import org.bukkit.event.Listener;
+import org.bukkit.event.player.PlayerQuitEvent;
 
 import java.util.Arrays;
 import java.util.Collections;
@@ -14,9 +17,14 @@ import java.util.Map;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
-public class MyBadgeCmd implements TabExecutor {
+public class MyBadgeCmd implements TabExecutor, Listener {
     private final CNBadges plugin;
     private final Map<UUID, Long> cooldowns = new HashMap<>();
+
+    @EventHandler
+    public void onQuit(PlayerQuitEvent event) {
+        cooldowns.remove(event.getPlayer().getUniqueId());
+    }
     private static final long COOLDOWN_TIME = 5000L;
     private static final List<String> SYMBOLS = Arrays.asList("✧", "✦", "★");
     private static final List<String> COLORS = Arrays.asList(
